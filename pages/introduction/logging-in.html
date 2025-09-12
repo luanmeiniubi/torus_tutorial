@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Get Started: Logging In</title>
+
+  <!-- Keep your global layout (header/sidebar) -->
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" href="data:,">
+
+  <style>
+    /* ===== page-scoped overrides so the hero fills the content pane ===== */
+    :root{
+      --header-h: 56px;   /* adjust if your sticky header differs */
+      /* screenshot colors */
+      --bg1:#3657f0;      /* left gradient */
+      --bg2:#e36ccf;      /* right gradient */
+      --copy:#ffffff;
+      --card-border:#ffffff;
+      --author:#EBAAF2;     /* lilac */
+      --instructor:#99cdb5; /* mint */
+      --student:#0a4cc5;    /* deep blue */
+    }
+
+    body.page-login .content{
+      padding: 0 !important;          /* remove 24px gutters on this page */
+      position: relative !important;  /* anchor absolute hero */
+    }
+    /* neutralize common width-limiting wrappers from templates */
+    body.page-login .video-container,
+    body.page-login .title-bar,
+    body.page-login .page-content{
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+
+    /* ===== the hero fills the entire content pane (right of sidebar) ===== */
+    #login-hero{
+      position: absolute; inset: 0;                        /* edge-to-edge in .content */
+      display: grid;
+      align-content: start;                                 /* start like the screenshot */
+      gap: clamp(20px, 3vw, 32px);
+      padding: clamp(24px, 5vw, 60px);
+      color: var(--copy);
+      background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      border-radius: 0;                                     /* true bleed */
+      min-height: calc(100vh - var(--header-h));           /* fallback */
+    }
+
+    /* headline block */
+    #login-hero h1{
+      margin: 0 0 10px 0;
+      font-weight: 800;
+      font-size: clamp(42px, 7vw, 84px);   /* big like screenshot */
+      line-height: 1.1;
+      letter-spacing: .2px;
+      position: relative;
+    }
+    #login-hero h1::after{                 /* subtle underline bar */
+      content:"";
+      position:absolute; left:0; bottom:-10px;
+      width: clamp(180px, 30vw, 420px); height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #7ad7ff, #b0f, #7ad7ff);
+      opacity:.9;
+    }
+
+    /* explanatory copy */
+    #login-hero .lede{
+      margin: 18px 0 0 0;
+      font-size: clamp(16px, 1.4vw, 20px);
+      line-height: 1.7;
+    }
+
+    
+    /* 1) Grid: enforce big gaps + wrapping, center items in each column */
+    #login-hero .grid{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* stable 3 cols */
+    column-gap: clamp(24px, 4vw, 48px);  /* bigger horizontal gap */
+    row-gap: clamp(28px, 5vw, 56px);     /* bigger vertical gap */
+    justify-items: center;                /* center the card in each track */
+    align-items: start;
+    }
+
+    /* 2) Cards: let the grid decide width, just cap it so they’re “thinner” */
+    .role-card{
+    width: 100%;          /* fill its grid track (so no overflow) */
+    max-width: 300px;     /* ← thinner cap (tune 280–320px to taste) */
+    /* keep your min-height from earlier (tall look) */
+    /* e.g.: min-height: clamp(260px, 28vh, 360px); */
+    }
+
+    /* 3) Breakpoints still 3 → 2 → 1 (no horizontal crowding) */
+    @media (max-width: 1100px){
+    #login-hero .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px){
+    #login-hero .grid{ grid-template-columns: 1fr; }
+    .role-card{ max-width: 420px; }  /* give mobile a bit more width */
+    }
+
+
+    /* cards exactly like screenshot: thick white border + rounded + shadow */
+    .role-card{
+      text-align: initial;
+      gap: 12px;
+      align-items: center;
+      display: flex; flex-direction: column; justify-content: center;
+      min-height: clamp(400px, 28vh, 360px); /* was 220px */
+      padding: clamp(18px, 2.8vw, 32px);
+      border-radius: 20px;
+      border: 5px solid var(--card-border);
+      color: #fff;
+      text-align: left;
+      box-shadow: 0 8px 28px rgba(0,0,0,.18);
+      cursor: grab; user-select: none; outline: none;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .role-card:active{ cursor: grabbing; }
+    .role-card:hover,
+    .role-card:focus-visible{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.22);
+    }
+
+    .role-card h2{
+    text-align: center;
+    text-wrap: balance;      /* modern browsers balance multi-line headings */
+    margin: 0 0 6px;
+}
+    .role-card p{
+  max-width: 28ch;         /* ~28 characters per line reads well in narrow cards */
+  text-align: left;
+  margin: 0 auto;          /* center the paragraph block inside the card */
+  line-height: 1.55;
+  font-size: clamp(15px, 1.1vw, 18px);
+  text-wrap: pretty;       /* nicer breaks when supported */
+  hyphens: auto;           /* helps avoid ugly gaps; ensure <html lang="en"> */
+}
+
+
+    .role-card.author    { background: var(--author); }
+    .role-card.instructor{ background: var(--instructor); }
+    .role-card.student   { background: var(--student); }
+
+    .role-card:hover,
+    .role-card:focus-visible{
+    filter: brightness(1.06) saturate(1.02);     /* subtle lift */
+    box-shadow: 0 12px 32px rgba(0,0,0,.22);     /* a bit deeper shadow */
+    border-color: rgba(255,255,255,.95);         /* slightly brighter border */
+    transform: translateY(-2px);
+    }
+
+    /* optional soft sheen overlay (keeps bg intact) */
+    .role-card::after{
+    content:"";
+    position:absolute; inset:0; border-radius:inherit;
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+    opacity:0; pointer-events:none;
+    transition: opacity .14s ease;
+    }
+    .role-card:hover::after,
+    .role-card:focus-visible::after{
+    opacity:1;
+    }
+    
+
+    /* footer note */
+    #login-hero .note{
+      margin-top: clamp(18px, 3vw, 28px);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 2px;
+      font-size: clamp(15px, 1.1vw, 20px);
+    }
+
+    /* drag ghost (layout stays fixed) */
+    .drag-ghost{
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      box-shadow: 0 12px 32px rgba(0,0,0,.28);
+      transform: scale(1.02);
+      border-radius: 20px;
+      will-change: transform,left,top;
+    }
+    .drag-origin--dim{ opacity: .65; }
+  </style>
+</head>
+
+<body class="page-login">
+  <!-- Rendered inside your app’s .content pane (right of sidebar). -->
+  <main>
+    <section id="login-hero" aria-labelledby="title">
+      <h1 id="title">Get Started: <em>Logging In</em></h1>
+
+      <p class="lede">
+        Torus incorporates features and a specialized interface for course authors, instructors, and students. Select your primary role below to start a customized tutorial tailored to your needs!
+      </p>
+
+      <section class="grid" aria-label="Choose your role">
+        <!-- Update data-target values to your exact sidebar/page titles -->
+        <button class="role-card author" data-target="Create a New Project" aria-label="Author">
+          <h2>Author</h2>
+          <p>I am designing, developing, or editing course content.</p>
+        </button>
+
+        <button class="role-card instructor" data-target="Collaborators, and Visibility" aria-label="Instructor">
+          <h2>Instructor</h2>
+          <p>I am teaching a course.</p>
+        </button>
+
+        <button class="role-card student" data-target="Student View" aria-label="Student">
+          <h2>Student</h2>
+          <p>I am taking a course.</p>
+        </button>
+      </section>
+
+      <p class="note">
+        You can return to this home page any time to start a tutorial for a different role.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    /* click → navigate (same custom event your search overlay handles) */
+    document.querySelectorAll('#login-hero .role-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const title = card.dataset.target;
+        if (title) {
+          window.dispatchEvent(new CustomEvent('search:openTutorial', { detail: { title } }));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+
+      /* drag ghost: original card stays put; layout never reflows */
+      card.setAttribute('draggable','false');
+      card.style.touchAction = 'none';
+      card.addEventListener('pointerdown', onDown);
+    });
+
+    let ghost = null, origin = null, dx = 0, dy = 0;
+
+    function onDown(e){
+      if (e.button !== 0) return;
+      origin = e.currentTarget;
+      const r = origin.getBoundingClientRect();
+      dx = e.clientX - r.left; dy = e.clientY - r.top;
+
+      ghost = origin.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      Object.assign(ghost.style, {
+        width: r.width + 'px',
+        height: r.height + 'px',
+        left: (e.clientX - dx) + 'px',
+        top:  (e.clientY - dy) + 'px'
+      });
+      document.body.appendChild(ghost);
+
+      origin.classList.add('drag-origin--dim');
+      origin.setPointerCapture(e.pointerId);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+    }
+
+    function onMove(e){
+      if (!ghost) return;
+      ghost.style.left = (e.clientX - dx) + 'px';
+      ghost.style.top  = (e.clientY - dy) + 'px';
+    }
+
+    function onUp(){
+      window.removeEventListener('pointermove', onMove);
+      if (!ghost || !origin) return;
+
+      const r = origin.getBoundingClientRect();
+      const gx = parseFloat(ghost.style.left) || 0;
+      const gy = parseFloat(ghost.style.top)  || 0;
+      const tx = r.left - gx;
+      const ty = r.top  - gy;
+
+      ghost.style.transition = 'transform 160ms ease, opacity 160ms ease';
+      ghost.style.transform  = `translate(${tx}px, ${ty}px)`;
+      ghost.style.opacity    = '0.6';
+
+      setTimeout(() => {
+        ghost.remove();
+        ghost = null;
+        origin.classList.remove('drag-origin--dim');
+        origin = null;
+      }, 170);
+    }
+
+    /* If opened standalone (without .content), still fill viewport */
+    (function ensureMinHeight(){
+      const hero = document.getElementById('login-hero');
+      if (!hero) return;
+      function fit(){
+        if (!document.querySelector('.content')) {
+          hero.style.minHeight = `calc(100vh - var(--header-h))`;
+        }
+      }
+      window.addEventListener('load', fit, { once:true });
+      window.addEventListener('resize', fit);
+    })();
+  </script>
+</body>
+</html>

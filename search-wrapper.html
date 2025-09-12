@@ -1,0 +1,114 @@
+<style>
+  :root{
+    --blue:#0041C2; --blue-dark:#083BD1; --ink:#0f172a; --muted:#5b6475;
+    --border:#d9dde5; --panel:#f5f7fb; --white:#fff;
+  }
+
+  /* Modal shell is handled by host (#searchModal); these style the content */
+  #searchModal{ background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    box-shadow:0 12px 28px rgba(0,0,0,.18); padding:20px 22px 24px; }
+
+  /* Header */
+  #searchModal .sw-header{ display:flex; align-items:center; gap:14px; margin:2px 0 16px; }
+  #searchModal .sw-icon{ width:34px; height:34px; color:var(--blue); flex:0 0 34px; }
+  #searchModal .sw-title{ margin:0; font-size:28px; line-height:1.1; font-weight:700; color:var(--blue); letter-spacing:.2px; }
+  #searchModal .sw-close{ margin-left:auto; background:none; border:0; cursor:pointer; width:36px; height:36px;
+    display:grid; place-items:center; border-radius:8px; color:var(--blue); }
+  #searchModal .sw-close:hover{ background:rgba(10,80,255,.08); }
+
+  /* Input */
+  #searchModal .sw-bar{ margin:4px 0 4px; }
+  #searchModal .sw-input{ width:100%; padding:18px 20px; font-size:18px; color:var(--ink); background:var(--white);
+    border:1.5px solid #c9ced8; border-radius:18px; outline:none; }
+  #searchModal .sw-input::placeholder{ color:#9aa3b2; }
+  #searchModal .sw-input:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(10,80,255,.12); }
+
+  /* Suggestions (chips) */
+  #searchModal .sw-suggest{ display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 6px; }
+  #searchModal .sw-suggest-row{display:flex; flex-direction: column; 
+  align-items: flex-start; gap: 8px; margin: 8px 0 12px;
+}
+/* Chip row stays a wrap flex line */
+  #searchModal .sw-suggest{display:flex; flex-wrap: wrap; gap: 10px 16px;}
+
+#searchModal .sw-suggest-label{font-size: 13px; font-weight: 500;}
+
+  #searchModal .sw-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 14px; border-radius:999px; border:2px solid var(--blue);
+    background:transparent; color:var(--blue); font-weight:700; font-size:14px;
+    cursor:pointer;
+  }
+  #searchModal .sw-chip:hover{ background:var(--blue); color:var(--white); }
+
+  /* Results */
+  #searchModal .sw-results{ margin-top:6px; }
+  #searchModal .sw-block{ padding:14px 2px 6px; }
+  #searchModal .sw-sep{ border:0; border-top:1px solid var(--border); margin:14px 0; }
+
+  #searchModal .sw-found{ color:var(--ink); font-size:18px; margin:0 0 6px; }
+  #searchModal .sw-layer{ font-weight:800; }
+
+  #searchModal .sw-quote{ margin:0 0 12px; color:var(--ink); font-size:20px; line-height:1.35; }
+  #searchModal mark{ background:transparent; color:var(--blue); font-weight:800; padding:0; }
+
+  /* Outline pill button */
+  #searchModal .sw-actions{ margin:8px 0 4px; }
+  #searchModal .sw-btn{ display:inline-flex; align-items:center; gap:10px; padding:10px 16px; border-radius:999px;
+    border:2px solid var(--blue); background:transparent; color:var(--blue); font-weight:700; font-size:18px;
+    cursor:pointer; text-decoration:none; }
+  #searchModal .sw-btn:hover{ background:var(--blue); color:var(--white); }
+  #searchModal .sw-btn svg{ width:20px; height:20px; }
+
+  /* Base text */
+  #searchModal .search-wrapper{ color:var(--ink); font: normal 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+</style>
+
+<div class="search-wrapper" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+  <!-- Header -->
+  <div class="sw-header">
+    <svg class="sw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="7"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <h2 id="searchTitle" class="sw-title">Search the Tutorial</h2>
+    <button id="closeSearch" class="sw-close" aria-label="Close search">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3">
+        <line x1="18" y1="6"  x2="6"  y2="18"></line>
+        <line x1="6"  y1="6"  x2="18" y2="18"></line>
+      </svg>
+    </button>
+    
+  </div>
+
+  <!-- Search bar -->
+  <div class="sw-bar">
+    <input id="searchInput" class="sw-input" type="search" placeholder="Type a keyword…" autocomplete="off" aria-label="Search tutorial">
+  </div>
+
+<!-- Suggestions with label -->
+<div class="sw-suggest-row" aria-labelledby="suggestLabel">
+  <span id="suggestLabel" class="sw-suggest-label">Suggested:</span>
+  <div id="suggest" class="sw-suggest" role="listbox" aria-label="Suggested keywords"></div>
+</div>
+
+  <!-- Results container -->
+  <div id="results" class="sw-results" aria-live="polite"></div>
+
+  <!-- Hidden template for one result block -->
+  <template id="sw-result-template">
+    <div class="sw-block">
+      <p class="sw-found">Found in: <span class="sw-layer"></span></p>
+      <p class="sw-quote"></p>
+      <div class="sw-actions">
+        <a class="sw-btn" href="#" role="button">
+          Go to Tutorial
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+        </a>
+      </div>
+      <hr class="sw-sep">
+    </div>
+  </template>
+</div>
