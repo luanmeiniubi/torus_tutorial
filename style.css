@@ -115,6 +115,7 @@ html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
   margin: 10px 6px;   
   padding: 0;
   display: block;    
+  padding-left: 10px;
 }
 
 .submenu.collapsed { display: none; }
@@ -157,11 +158,13 @@ html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
 /* colors */
 .submenu li .badge[data-level="intermediate"]{
   color:#b45309;
+  font-size: 9px;
   background:#fde9d4;
   border-color:#f3d7ba;
 }
 .submenu li .badge[data-level="advanced"]{
   color:#7c2d12;
+  font-size:9px;
   background:#fbe3d6;
   border-color:#efc6b8;
 }
