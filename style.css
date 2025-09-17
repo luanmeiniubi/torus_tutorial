@@ -130,7 +130,7 @@ html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
   border: 1px solid var(--border);
   color: #1f2937;
   cursor: pointer;
-  margin-bottom: 10px;;
+  margin-bottom: 10px;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
   width: 100%;
   box-sizing: border-box;
