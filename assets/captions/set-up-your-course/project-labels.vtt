@@ -1,0 +1,69 @@
+WEBVTT
+
+0
+00:00:00.460 --> 00:00:03.640
+Torus follows a default hierarchy of units,
+
+1
+00:00:03.759 --> 00:00:04.400
+modules,
+
+2
+00:00:04.599 --> 00:00:05.340
+sections,
+
+3
+00:00:05.760 --> 00:00:08.500
+where a unit can contain multiple modules
+
+4
+00:00:08.800 --> 00:00:11.220
+and a module can contain multiple sections.
+
+5
+00:00:12.199 --> 00:00:12.680
+Units,
+
+6
+00:00:12.819 --> 00:00:13.279
+modules,
+
+7
+00:00:13.359 --> 00:00:14.159
+and sections
+
+8
+00:00:14.359 --> 00:00:17.000
+can all contain pages with course content.
+
+9
+00:00:18.239 --> 00:00:22.020
+You can rename these containers to better fit your course structure.
+
+10
+00:00:22.600 --> 00:00:23.409
+For example,
+
+11
+00:00:23.559 --> 00:00:26.340
+if your course is structured by weeks,
+
+12
+00:00:26.639 --> 00:00:29.040
+you can rename units to weeks
+
+13
+00:00:29.399 --> 00:00:32.220
+to reflect the weekly progression of your lessons.
+
+14
+00:00:32.720 --> 00:00:34.750
+If you're designing a language course,
+
+15
+00:00:34.919 --> 00:00:37.259
+you can rename these structural containers
+
+16
+00:00:37.389 --> 00:00:38.659
+in your target language.
