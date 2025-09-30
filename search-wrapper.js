@@ -1,8 +1,8 @@
-// search-wrapper.js — live search + relevance ranking + suggestions + "Did you mean" + persistence
+// search-wrapper.js — live search + relevance ranking + multi-word "Did you mean" + persistence
 (function () {
   const PAGE_SIZE   = 3;
   const DEBOUNCE_MS = 150;
-  const STORE_KEY   = 'tutorialSearchState'; // sessionStorage key
+  const STORE_KEY   = 'tutorialSearchState';
 
   // Chips shown when input is empty
   const SUGGESTIONS = [
@@ -68,14 +68,20 @@
         if (seen++ > 200) break;
         if (w.length >= 4 && !STOP.has(w)) bump(w);
       }
+      if (Array.isArray(item.keywords)) {
+        for (const kw of item.keywords) {
+          const w = normalize(kw);
+          if (w.length >= 3) bump(w);
+        }
+      }
     }
     for (const s of SUGGESTIONS) for (const w of tokenize(s)) if (w.length >= 3) bump(w);
     return counts;
   }
 
-  function suggestCorrections(q, dict){
-    const word = q.toLowerCase().trim();
-    if (!word || /\s/.test(word) || word.length < 3) return [];
+  // Return up to `limit` candidate corrections for a single token
+  function suggestCorrections(word, dict, limit = 2){
+    if (!word || word.length < 3) return [];
     const maxDist = word.length <= 4 ? 1 : word.length <= 7 ? 2 : 3;
 
     const cand = [];
@@ -88,8 +94,75 @@
     cand.sort((a,b) => (a.d - b.d) || (b.freq - a.freq) || a.w.localeCompare(b.w));
 
     const out = [];
-    for (const c of cand) { if (!out.includes(c.w)) out.push(c.w); if (out.length >= 5) break; }
+    for (const c of cand) { if (!out.includes(c.w)) out.push(c.w); if (out.length >= limit) break; }
     return out;
+  }
+
+  // Build fast-lookups for ranking suggestions
+  function buildLookups(index){
+    const titleSet = new Set();
+    const keywordSet = new Set();
+    for (const it of index || []) {
+      const t = normalize(it.title || '');
+      if (t) titleSet.add(t);
+      if (Array.isArray(it.keywords)) {
+        for (const kw of it.keywords) keywordSet.add(normalize(kw));
+      }
+    }
+    const chipSet = new Set(SUGGESTIONS.map(normalize));
+    return { titleSet, keywordSet, chipSet };
+  }
+
+  // Rank phrase suggestions using simple heuristics
+  function rankSuggestions(phrases, dict, lookups){
+    const { titleSet, keywordSet, chipSet } = lookups;
+    const scored = [];
+    for (const p of phrases) {
+      const toks = tokenize(p);
+      let score = 0;
+      for (const t of toks) score += (dict.get(t) || 0);
+      if (titleSet.has(normalize(p))) score += 50;
+      if (chipSet.has(normalize(p)))  score += 20;
+      for (const t of toks) if (keywordSet.has(t)) score += 10;
+      scored.push({ p, score, len: p.length });
+    }
+    scored.sort((a,b) => (b.score - a.score) || (a.len - b.len) || a.p.localeCompare(b.p));
+    return scored.map(x => x.p);
+  }
+
+  // Aggressive: try correcting multiple words at once (bounded search)
+  function suggestCorrectionsForQuery(query, dict, lookups) {
+    const tokens = tokenize(query);
+    if (!tokens.length) return [];
+
+    // Per-token correction candidates (include original token)
+    const perToken = tokens.map(tok => {
+      const corr = suggestCorrections(tok, dict, 2);
+      return [tok, ...corr];
+    });
+
+    // Generate combinations, but cap expansions to avoid blowup
+    const suggestions = new Set();
+    const MAX_COMBOS = 128;
+
+    function dfs(i, cur){
+      if (suggestions.size >= MAX_COMBOS) return;
+      if (i === perToken.length) {
+        const phrase = cur.join(' ');
+        if (phrase !== query) suggestions.add(phrase);
+        return;
+      }
+      for (const choice of perToken[i]) {
+        cur.push(choice);
+        dfs(i+1, cur);
+        cur.pop();
+        if (suggestions.size >= MAX_COMBOS) break;
+      }
+    }
+    dfs(0, []);
+
+    const ranked = rankSuggestions(Array.from(suggestions), dict, lookups);
+    return ranked.slice(0, 5);
   }
 
   function makeSnippet(source, words){
@@ -113,12 +186,10 @@
 
   // ---------- relevance scoring ----------
   function computeScore(item, qTokens) {
-    // expected fields: title, transcript, keywords (optional), section (optional)
     const title = normalize(item.title || '');
     const body  = normalize(item.transcript || '');
     const kws   = Array.isArray(item.keywords) ? item.keywords.map(normalize) : [];
 
-    // weights: tune to your content
     const W = {
       exactTitle: 120,
       startsTitle: 70,
@@ -129,22 +200,18 @@
       tokenInBody: 5,
       orderBonus: 7,
       earlyPosBonus: 5,
-      sameSection: 12,       // boost if item.section matches a global active section (optional)
-      recencyBonus: 6        // placeholder if you later add lastUpdated
+      sameSection: 12,
+      recencyBonus: 6
     };
 
     const query = qTokens.join(' ');
     let score = 0;
 
-    // Title phrase matches
     if (title === query) score += W.exactTitle;
     if (title.startsWith(query)) score += W.startsTitle;
     if (title.includes(query)) score += W.containsTitle;
-
-    // Body phrase
     if (body.includes(query)) score += W.exactPhraseBody;
 
-    // Keyword hits
     for (const kw of kws) {
       if (!kw) continue;
       if (kw === query) score += W.keywordHit + 5;
@@ -152,7 +219,6 @@
       for (const t of qTokens) if (kw === t) score += 6;
     }
 
-    // Token overlap with proximity bonus
     const titleTokens = new Set(tokenize(item.title || ''));
     const bodyLower = body;
     let lastIdx = -1;
@@ -167,7 +233,6 @@
       }
     }
 
-    // Optional: section/context boost
     const activeSection = window.ACTIVE_SECTION && normalize(window.ACTIVE_SECTION);
     if (activeSection && normalize(item.section || '') === activeSection) {
       score += W.sameSection;
@@ -189,7 +254,7 @@
       const tl = title.toLowerCase();
       const bl = body.toLowerCase();
 
-      // ✅ More forgiving: allow tokens across combined title+body
+      // allow tokens across combined title+body
       const combo = tl + ' ' + bl;
       const hit = qTokens.every(w => combo.includes(w));
       if (!hit) continue;
@@ -197,9 +262,7 @@
       const score = computeScore(item, qTokens);
       if (score <= 0) continue;
 
-      // Prefer body for snippet when it contains matches
-      const snippetSource =
-        qTokens.some(w => bl.includes(w)) ? body : title;
+      const snippetSource = qTokens.some(w => bl.includes(w)) ? body : title;
 
       scored.push({
         item,
@@ -209,7 +272,7 @@
       });
     }
 
-    // Sort by score desc, then shorter title (tighter match), then alpha
+    // Sort by score desc, then shorter title, then alpha
     scored.sort((a,b) => (b.score - a.score)
       || (a.layer.length - b.layer.length)
       || a.layer.localeCompare(b.layer));
@@ -281,6 +344,7 @@
 
     const INDEX = window.TUTORIAL_INDEX || [];
     const DICT  = buildDictionary(INDEX);
+    const LOOK  = buildLookups(INDEX);
 
     let ranked = [];
     let rendered = 0;
@@ -310,7 +374,6 @@
       more.className = 'sw-actions';
       more.style.textAlign = 'center';
 
-      // ✅ Accessible button instead of anchor
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'sw-btn sw-load';
@@ -318,7 +381,7 @@
       btn.addEventListener('click', () => {
         more.remove();
         rendered = renderBatch(resultsEl, ranked, rendered, PAGE_SIZE, navigate);
-        saveState(currentQ, rendered); // persist how far we expanded
+        saveState(currentQ, rendered);
         showLoadMore();
       });
 
@@ -379,7 +442,7 @@
         none.className = 'sw-block';
         none.innerHTML = `<p class="sw-found" style="color:#9aa3b2">No match found.</p>`;
         resultsEl.appendChild(none);
-        renderDidYouMean(suggestCorrections(q, DICT));
+        renderDidYouMean(suggestCorrectionsForQuery(q, DICT, LOOK));
         return;
       }
 
@@ -405,7 +468,7 @@
 
     input.addEventListener('input', run);
 
-    // ✅ Enter opens top result
+    // Enter opens top result
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
